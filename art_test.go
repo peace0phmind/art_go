@@ -9,7 +9,7 @@ func TestCreate(t *testing.T) {
 	if err != nil {
 		print(err)
 	} else {
+		art.Release()
 		print("create ok")
-		print(art)
 	}
 }

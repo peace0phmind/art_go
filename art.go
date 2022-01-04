@@ -23,6 +23,10 @@ func NewArt(nSerialCode uint32) (*Art, error) {
 	return ret, nil
 }
 
+func (art *Art) Release() {
+	C.ACTS2200_DEV_Release(art.handle)
+}
+
 func (art *Art) AIInitTask() error {
 	//
 	//C.struct_AIParam.nSampChanCount = 4
