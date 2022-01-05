@@ -10,6 +10,8 @@ func main() {
 	if err != nil {
 		println(fmt.Sprintf("create art err: %v", err))
 	} else {
+		defer art.Release()
+
 		param := &art_go.AITaskParam{}
 		param.SampleSignal = art_go.AI_SAMPLE_SIGNAL_AI
 		// 时间参数
@@ -52,7 +54,6 @@ func main() {
 			}
 		}
 
-		art.Release()
 		println("create ok")
 	}
 }
