@@ -11,7 +11,7 @@ func main() {
 		param.SampleSignal = art_go.AI_SAMPLE_SIGNAL_AI
 		// 时间参数
 		param.SampleMode = art_go.SAMPLE_MODE_CONTINUOUS
-		param.SamplePerChan = 1000
+		param.SamplePerChannel = 1000
 		param.SampleRate = 1000
 		param.SampleClockSource = art_go.SAMPLE_CLOCK_SOURCE_LOCAL
 		param.ExtSampleClockEdge = art_go.Ext_SAMPLE_CLOCK_EDGE_RISING
@@ -34,7 +34,12 @@ func main() {
 				if err = task.SendSoftTrig(); err != nil {
 					print(err)
 				} else {
-
+					buf := make([]float64, 4*1000)
+					count, err := task.ReadAnalog(&buf, 10, art_go.FILL_MODE_GroupByScanNumber)
+					print(count)
+					if err != nil {
+						print(err)
+					}
 				}
 
 				task.Stop()
