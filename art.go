@@ -3,8 +3,8 @@ package art_go
 /*
 #include "./libs/ACTS2200.h"
 
-#cgo arm64 LDFLAGS: -L${SRCDIR}/libs/arm -lACTS2200
-#cgo amd64 LDFLAGS: -L${SRCDIR}/libs/x86 -lACTS2200
+#cgo arm64 LDFLAGS: -L${SRCDIR}/libs/arm -Wl,-rpath=${SRCDIR}/libs/arm -lACTS2200
+#cgo amd64 LDFLAGS: -L${SRCDIR}/libs/x86 -Wl,-rpath=${SRCDIR}/libs/x86 -lACTS2200
 */
 import "C"
 import "errors"
