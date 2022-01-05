@@ -17,8 +17,8 @@ func main() {
 		param.SampleSignal = art_go.AI_SAMPLE_SIGNAL_AI
 		// 时间参数
 		param.SampleMode = art_go.SAMPLE_MODE_CONTINUOUS
-		param.SamplePerChannel = 5000
-		param.SampleRate = 10000
+		param.SamplePerChannel = 1000
+		param.SampleRate = 2000
 		param.SampleClockSource = art_go.SAMPLE_CLOCK_SOURCE_LOCAL
 		param.ExtSampleClockEdge = art_go.Ext_SAMPLE_CLOCK_EDGE_RISING
 
@@ -48,6 +48,7 @@ func main() {
 							println(fmt.Sprintf("read analog error: %v", err))
 						} else {
 							println(fmt.Sprintf("%v, %v, %v, %v", buf[0], buf[1], buf[2], buf[3]))
+							println(fmt.Sprintf("%v, %v, %v, %v", buf[4], buf[5], buf[6], buf[7]))
 						}
 					}
 				}
