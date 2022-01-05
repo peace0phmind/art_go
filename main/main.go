@@ -8,7 +8,7 @@ import (
 func main() {
 	art, err := art_go.NewArt(0)
 	if err != nil {
-		print(err)
+		println(fmt.Sprintf("create art err: %v", err))
 	} else {
 		param := &art_go.AITaskParam{}
 		param.SampleSignal = art_go.AI_SAMPLE_SIGNAL_AI
@@ -27,21 +27,21 @@ func main() {
 			param.Channels = append(param.Channels, ch)
 		}
 
-		task, err1 := art.InitAITask(param)
-		if err1 != nil {
-			print(err1)
+		task, err := art.InitAITask(param)
+		if err != nil {
+			println(fmt.Sprintf("init ai task err: %v", err))
 		} else {
 			if err = task.Start(); err != nil {
-				print(err)
+				println(fmt.Sprintf("start ai task err: %v", err))
 			} else {
 				if err = task.SendSoftTrig(); err != nil {
-					print(err)
+					println(fmt.Sprintf("send soft trig err: %v", err))
 				} else {
 					buf := make([]float64, 4*1000)
 					count, err := task.ReadAnalog(&buf, 10, art_go.FILL_MODE_GroupByScanNumber)
-					print(count)
+					println(fmt.Sprintf("get count: %v", count))
 					if err != nil {
-						print(err)
+						println(fmt.Sprintf("read analog error: %v", err))
 					} else {
 						println(fmt.Sprintf("%v, %v, %v, %v", buf[0], buf[1], buf[2], buf[3]))
 					}
