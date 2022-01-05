@@ -40,12 +40,14 @@ func main() {
 					println(fmt.Sprintf("send soft trig err: %v", err))
 				} else {
 					buf := make([]float64, 4*1000)
-					count, err := task.ReadAnalog(&buf, 10, art_go.FILL_MODE_GroupByScanNumber)
-					println(fmt.Sprintf("get count: %v", count))
-					if err != nil {
-						println(fmt.Sprintf("read analog error: %v", err))
-					} else {
-						println(fmt.Sprintf("%v, %v, %v, %v", buf[0], buf[1], buf[2], buf[3]))
+					for i := 0; i < 10; i++ {
+						count, err := task.ReadAnalog(&buf, 10, art_go.FILL_MODE_GroupByScanNumber)
+						println(fmt.Sprintf("get count: %v", count))
+						if err != nil {
+							println(fmt.Sprintf("read analog error: %v", err))
+						} else {
+							println(fmt.Sprintf("%v, %v, %v, %v", buf[0], buf[1], buf[2], buf[3]))
+						}
 					}
 				}
 
