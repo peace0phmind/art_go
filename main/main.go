@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"github.com/peace0phmind/art_go"
+	"time"
 )
 
 func main() {
@@ -16,8 +17,8 @@ func main() {
 		param.SampleSignal = art_go.AI_SAMPLE_SIGNAL_AI
 		// 时间参数
 		param.SampleMode = art_go.SAMPLE_MODE_CONTINUOUS
-		param.SamplePerChannel = 1000
-		param.SampleRate = 1000
+		param.SamplePerChannel = 5000
+		param.SampleRate = 10000
 		param.SampleClockSource = art_go.SAMPLE_CLOCK_SOURCE_LOCAL
 		param.ExtSampleClockEdge = art_go.Ext_SAMPLE_CLOCK_EDGE_RISING
 
@@ -39,10 +40,10 @@ func main() {
 				if err = task.SendSoftTrig(); err != nil {
 					println(fmt.Sprintf("send soft trig err: %v", err))
 				} else {
-					buf := make([]float64, 4*1000)
-					for i := 0; i < 10; i++ {
+					buf := make([]float64, 4*param.SamplePerChannel)
+					for i := 0; i < 1000; i++ {
 						count, err := task.ReadAnalog(&buf, 10, art_go.FILL_MODE_GroupByScanNumber)
-						println(fmt.Sprintf("get count: %v", count))
+						println(fmt.Sprintf("%s get count: %v", time.Now().Format("0405.999999999"), count))
 						if err != nil {
 							println(fmt.Sprintf("read analog error: %v", err))
 						} else {
