@@ -21,13 +21,25 @@ func main() {
 			ch.Channel = i
 			ch.SampleRange = art_go.SAMPLE_RANGE_N10_P10V
 			ch.RefGround = art_go.REF_GROUND_RSE
+			param.Channels = append(param.Channels, ch)
 		}
 
 		task, err1 := art.InitAITask(param)
 		if err1 != nil {
 			print(err1)
 		} else {
-			println(task)
+			if err = task.Start(); err != nil {
+				print(err)
+			} else {
+				if err = task.SendSoftTrig(); err != nil {
+					print(err)
+				} else {
+
+				}
+
+				task.Stop()
+				task.Release()
+			}
 		}
 
 		art.Release()

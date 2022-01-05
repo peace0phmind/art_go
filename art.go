@@ -130,3 +130,35 @@ func (art *Art) InitAITask(param *AITaskParam) (*AITask, error) {
 		return nil, errors.New("call init task fail")
 	}
 }
+
+func (aiTask *AITask) Start() error {
+	if C.ACTS2200_AI_StartTask(aiTask.art.handle) != 0 {
+		return nil
+	} else {
+		return errors.New("task start error")
+	}
+}
+
+func (aiTask *AITask) SendSoftTrig() error {
+	if C.ACTS2200_AI_SendSoftTrig(aiTask.art.handle) != 0 {
+		return nil
+	} else {
+		return errors.New("send soft trig")
+	}
+}
+
+func (aiTask *AITask) Stop() error {
+	if C.ACTS2200_AI_StopTask(aiTask.art.handle) != 0 {
+		return nil
+	} else {
+		return errors.New("task stop error")
+	}
+}
+
+func (aiTask *AITask) Release() error {
+	if C.ACTS2200_AI_ReleaseTask(aiTask.art.handle) != 0 {
+		return nil
+	} else {
+		return errors.New("task release error")
+	}
+}
