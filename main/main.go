@@ -1,6 +1,9 @@
 package main
 
-import "github.com/peace0phmind/art_go"
+import (
+	"fmt"
+	"github.com/peace0phmind/art_go"
+)
 
 func main() {
 	art, err := art_go.NewArt(0)
@@ -39,6 +42,8 @@ func main() {
 					print(count)
 					if err != nil {
 						print(err)
+					} else {
+						println(fmt.Sprintf("%v, %v, %v, %v", buf[0], buf[1], buf[2], buf[3]))
 					}
 				}
 
