@@ -182,8 +182,9 @@ const (
 func (aiTask *AITask) ReadAnalog(buffer *[]float64, timeoutSecond, fillMode int) (readSamplePerChannel int, err error) {
 	var samplePerChannel C.uint
 	if C.ACTS2200_AI_ReadAnalog(aiTask.art.handle, (*C.double)(unsafe.Pointer(&aiTask.buffer)), C.uint(aiTask.samplePerChannel), &samplePerChannel, C.double(timeoutSecond), C.uint(fillMode)) != 0 {
-		copy(*buffer, aiTask.buffer)
-		return int(samplePerChannel), nil
+		//copy(*buffer, aiTask.buffer)
+		readSamplePerChannel = int(samplePerChannel)
+		return readSamplePerChannel, nil
 	} else {
 		return 0, errors.New("read analog error")
 	}
