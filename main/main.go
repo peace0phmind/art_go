@@ -2,9 +2,9 @@ package main
 
 import (
 	"fmt"
-	"github.com/gocarina/gocsv"
+	"github.com/influxdata/influxdb-client-go/v2"
 	"github.com/peace0phmind/art_go"
-	"os"
+	"strconv"
 	"time"
 )
 
@@ -28,7 +28,8 @@ type Csv struct { // Our example struct, you can use "-" to ignore a field
 	C16 float64 `csv:"c16"`
 }
 
-const cannel_count = 16
+const channel_count = 16
+const channel_count_for_save = 1
 
 func main() {
 	art, err := art_go.NewArt(0)
@@ -36,6 +37,14 @@ func main() {
 		println(fmt.Sprintf("create art err: %v", err))
 	} else {
 		defer art.Release()
+
+		// open influx db
+		client := influxdb2.NewClientWithOptions("http://192.168.1.93:8086",
+			"5SGBnfySvtxAIRdxCiyo25CKJfA63qM_0HW_tAOS3tW7gy7biHSUbw7LU1h7hefpT3V_kIgkGkj5uc8Q0x_GlQ==",
+			influxdb2.DefaultOptions().SetUseGZip(true).SetPrecision(time.Millisecond).SetBatchSize(1000))
+		defer client.Close()
+
+		writeAPI := client.WriteAPI("znb", "znb")
 
 		param := &art_go.AITaskParam{}
 		param.SampleSignal = art_go.AI_SAMPLE_SIGNAL_AI
@@ -46,7 +55,7 @@ func main() {
 		param.SampleClockSource = art_go.SAMPLE_CLOCK_SOURCE_LOCAL
 		param.ExtSampleClockEdge = art_go.Ext_SAMPLE_CLOCK_EDGE_RISING
 
-		for i := 0; i < cannel_count; i++ {
+		for i := 0; i < channel_count; i++ {
 			ch := art_go.AIChannelParam{}
 			ch.Channel = i
 			ch.SampleRange = art_go.SAMPLE_RANGE_N10_P10V
@@ -64,8 +73,8 @@ func main() {
 				if err = task.SendSoftTrig(); err != nil {
 					println(fmt.Sprintf("send soft trig err: %v", err))
 				} else {
-					var csvs []Csv
-					buf := make([]float64, cannel_count*param.SamplePerChannel)
+					//var csvs []Csv
+					buf := make([]float64, channel_count*param.SamplePerChannel)
 					for i := 0; i < 20; i++ {
 						count, err := task.ReadAnalog(&buf, 10, art_go.FILL_MODE_GroupByScanNumber)
 						println(fmt.Sprintf("%s get count: %v", time.Now().Format("0405.999999999"), count))
@@ -75,39 +84,50 @@ func main() {
 							dd := time.Now()
 
 							for j := 0; j < param.SamplePerChannel; j++ {
-								csvs = append(csvs, Csv{
-									Id:  fmt.Sprintf("%s%03d", dd.Format("20060201150405"), j),
-									C1:  buf[cannel_count*j+0],
-									C2:  buf[cannel_count*j+1],
-									C3:  buf[cannel_count*j+2],
-									C4:  buf[cannel_count*j+3],
-									C5:  buf[cannel_count*j+4],
-									C6:  buf[cannel_count*j+5],
-									C7:  buf[cannel_count*j+6],
-									C8:  buf[cannel_count*j+7],
-									C9:  buf[cannel_count*j+8],
-									C10: buf[cannel_count*j+9],
-									C11: buf[cannel_count*j+10],
-									C12: buf[cannel_count*j+11],
-									C13: buf[cannel_count*j+12],
-									C14: buf[cannel_count*j+13],
-									C15: buf[cannel_count*j+14],
-									C16: buf[cannel_count*j+15],
-								})
+								for c := 0; c < channel_count_for_save; c++ {
+									p := influxdb2.NewPointWithMeasurement("voltage").
+										AddTag("channel", strconv.Itoa(c)).
+										AddField("value", buf[channel_count*j+c]).
+										SetTime(time.Unix(dd.Unix(), int64(1000000*j)))
+									// write asynchronously
+									writeAPI.WritePoint(p)
+								}
+
+								//csvs = append(csvs, Csv{
+								//	Id:  fmt.Sprintf("%s%03d", dd.Format("20060201150405"), j),
+								//	C1:  buf[cannel_count*j+0],
+								//	C2:  buf[cannel_count*j+1],
+								//	C3:  buf[cannel_count*j+2],
+								//	C4:  buf[cannel_count*j+3],
+								//	C5:  buf[cannel_count*j+4],
+								//	C6:  buf[cannel_count*j+5],
+								//	C7:  buf[cannel_count*j+6],
+								//	C8:  buf[cannel_count*j+7],
+								//	C9:  buf[cannel_count*j+8],
+								//	C10: buf[cannel_count*j+9],
+								//	C11: buf[cannel_count*j+10],
+								//	C12: buf[cannel_count*j+11],
+								//	C13: buf[cannel_count*j+12],
+								//	C14: buf[cannel_count*j+13],
+								//	C15: buf[cannel_count*j+14],
+								//	C16: buf[cannel_count*j+15],
+								//})
 							}
+
+							writeAPI.Flush()
 						}
 					}
 
-					csvFile, err := os.OpenFile("clients.csv", os.O_RDWR|os.O_CREATE, os.ModePerm)
-					if err != nil {
-						panic(err)
-					}
-					defer csvFile.Close()
-
-					err = gocsv.MarshalFile(&csvs, csvFile) // Use this to save the CSV back to the file
-					if err != nil {
-						panic(err)
-					}
+					//csvFile, err := os.OpenFile("clients.csv", os.O_RDWR|os.O_CREATE, os.ModePerm)
+					//if err != nil {
+					//	panic(err)
+					//}
+					//defer csvFile.Close()
+					//
+					//err = gocsv.MarshalFile(&csvs, csvFile) // Use this to save the CSV back to the file
+					//if err != nil {
+					//	panic(err)
+					//}
 
 				}
 
