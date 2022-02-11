@@ -29,7 +29,7 @@ type Csv struct { // Our example struct, you can use "-" to ignore a field
 }
 
 const channel_count = 16
-const channel_count_for_save = 1
+const channel_count_for_save = 15
 
 func main() {
 	art, err := art_go.NewArt(0)
@@ -40,7 +40,7 @@ func main() {
 
 		// open influx db
 		client := influxdb2.NewClientWithOptions("http://192.168.1.93:8086",
-			"5SGBnfySvtxAIRdxCiyo25CKJfA63qM_0HW_tAOS3tW7gy7biHSUbw7LU1h7hefpT3V_kIgkGkj5uc8Q0x_GlQ==",
+			"SazsQV8OYl7mUVAJbiN8b2McBMbk7eGcb4ivTYXydEQHyM1P-WoFrKSPN1JEB86_CrjWapf6cfuaYkUlI6GRuw==",
 			influxdb2.DefaultOptions().SetUseGZip(true).SetPrecision(time.Millisecond).SetBatchSize(1000))
 		defer client.Close()
 
@@ -75,18 +75,22 @@ func main() {
 				} else {
 					//var csvs []Csv
 					buf := make([]float64, channel_count*param.SamplePerChannel)
-					for i := 0; i < 20; i++ {
+					//for i := 0; i < 20; i++ {
+					for true {
 						count, err := task.ReadAnalog(&buf, 10, art_go.FILL_MODE_GroupByScanNumber)
 						println(fmt.Sprintf("%s get count: %v", time.Now().Format("0405.999999999"), count))
 						if err != nil {
 							println(fmt.Sprintf("read analog error: %v", err))
 						} else {
 							dd := time.Now()
+							if dd.Hour() < 6 || dd.Hour() > 22 {
+								continue
+							}
 
 							for j := 0; j < param.SamplePerChannel; j++ {
 								for c := 0; c < channel_count_for_save; c++ {
-									p := influxdb2.NewPointWithMeasurement("voltage").
-										AddTag("channel", strconv.Itoa(c)).
+									p := influxdb2.NewPointWithMeasurement("Ampere").
+										AddTag("channel", strconv.Itoa(c+1)).
 										AddField("value", buf[channel_count*j+c]).
 										SetTime(time.Unix(dd.Unix(), int64(1000000*j)))
 									// write asynchronously
