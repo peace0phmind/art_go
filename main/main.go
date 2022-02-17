@@ -40,7 +40,7 @@ func main() {
 
 		// open influx db
 		client := influxdb2.NewClientWithOptions("http://192.168.1.93:8086",
-			"SazsQV8OYl7mUVAJbiN8b2McBMbk7eGcb4ivTYXydEQHyM1P-WoFrKSPN1JEB86_CrjWapf6cfuaYkUlI6GRuw==",
+			"yvTRbUoJhVR4mI6GLCKwOX1pxczUZCWXiBEjCZ8dEq9W2KQatEPqQhLJxg5sj93c7XVmFTZf89V8f5yH3VVAgw==",
 			influxdb2.DefaultOptions().SetUseGZip(true).SetPrecision(time.Millisecond).SetBatchSize(1000))
 		defer client.Close()
 
@@ -78,7 +78,7 @@ func main() {
 					//for i := 0; i < 20; i++ {
 					for true {
 						count, err := task.ReadAnalog(&buf, 10, art_go.FILL_MODE_GroupByScanNumber)
-						println(fmt.Sprintf("%s get count: %v", time.Now().Format("0405.999999999"), count))
+						println(fmt.Sprintf("%s get count: %v", time.Now().Format("2006-01-02T15:04:05.999999999Z"), count))
 						if err != nil {
 							println(fmt.Sprintf("read analog error: %v", err))
 						} else {
