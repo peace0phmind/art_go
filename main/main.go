@@ -3,6 +3,8 @@ package main
 import (
 	"fmt"
 	"github.com/influxdata/influxdb-client-go/v2"
+	"github.com/influxdata/influxdb-client-go/v2/api"
+	"github.com/influxdata/influxdb-client-go/v2/api/http"
 	"github.com/peace0phmind/art_go"
 	"strconv"
 	"time"
@@ -31,6 +33,12 @@ type Csv struct { // Our example struct, you can use "-" to ignore a field
 const channel_count = 16
 const channel_count_for_save = 15
 
+func printInfluxdbError(writeAPI api.WriteAPI) {
+	for e := range writeAPI.Errors() {
+		println(e)
+	}
+}
+
 func main() {
 	art, err := art_go.NewArt(0)
 	if err != nil {
@@ -45,6 +53,11 @@ func main() {
 		defer client.Close()
 
 		writeAPI := client.WriteAPI("znb", "znb")
+		go printInfluxdbError(writeAPI)
+		writeAPI.SetWriteFailedCallback(func(batch string, error http.Error, retryAttempts uint) bool {
+			println(fmt.Sprintf("do retry: %s, err: %v", batch, error))
+			return true
+		})
 
 		param := &art_go.AITaskParam{}
 		param.SampleSignal = art_go.AI_SAMPLE_SIGNAL_AI

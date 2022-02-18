@@ -3,24 +3,17 @@ package main
 import (
 	"context"
 	"fmt"
-	"github.com/gocarina/gocsv"
 	influxdb2 "github.com/influxdata/influxdb-client-go/v2"
+	"github.com/rocketlaunchr/dataframe-go"
+	"github.com/rocketlaunchr/dataframe-go/exports"
+	"github.com/rocketlaunchr/dataframe-go/imports"
+	"github.com/xitongsys/parquet-go-source/local"
 	"os"
 	"testing"
 	"time"
 )
 
-type record struct {
-	T time.Time `csv:"_time"`
-	V float64   `csv:"_value"`
-}
-
-const (
-	Begin_Time  = "2022-02-18T00:30:00Z"
-	Time_Format = "2006-01-02T15:04:05Z"
-)
-
-func TestExportCsv(t *testing.T) {
+func TestParquet(t *testing.T) {
 	client := influxdb2.NewClient("http://192.168.1.93:8086", "yvTRbUoJhVR4mI6GLCKwOX1pxczUZCWXiBEjCZ8dEq9W2KQatEPqQhLJxg5sj93c7XVmFTZf89V8f5yH3VVAgw==")
 	// always close client at the end
 	defer client.Close()
@@ -33,10 +26,13 @@ func TestExportCsv(t *testing.T) {
 		panic(err)
 	}
 	e := b.Add(1 * time.Minute)
-	var records []record
+
+	idx := dataframe.NewSeriesTime("time", nil)
+	value := dataframe.NewSeriesFloat64("value", nil)
+	df := dataframe.NewDataFrame(idx, value)
 
 	i := 0
-	for j := 0; j < 60*4; j++ {
+	for j := 0; j < 1; j++ {
 		query := fmt.Sprintf(`from(bucket: "znb") |> range(start: %s, stop: %s) |> filter(fn: (r) => r["_measurement"] == "Ampere")   |> filter(fn: (r) => r["channel"] == "1") |> keep(columns: ["_time", "_value"])`,
 			b.Format(Time_Format), e.Format(Time_Format))
 		println(query)
@@ -61,14 +57,9 @@ func TestExportCsv(t *testing.T) {
 			if result.TableChanged() {
 				fmt.Printf("table: %s\n", result.TableMetadata().String())
 			}
-			//records[i].T = result.Record().Time()
-			//records[i].V = result.Record().Value().(float64)
 			i++
 			//// Access data
-			records = append(records, record{
-				T: result.Record().Time(),
-				V: result.Record().Value().(float64),
-			})
+			df.Append(nil, result.Record().Time(), result.Record().Value().(float64))
 		}
 		end = time.Now()
 		elapsed = end.Sub(start)
@@ -83,18 +74,25 @@ func TestExportCsv(t *testing.T) {
 		e = e.Add(1 * time.Minute)
 	}
 
-	csvFile, err := os.OpenFile("output.csv", os.O_RDWR|os.O_CREATE, os.ModePerm)
+	parquetFile, err := os.OpenFile("output.parquet", os.O_RDWR|os.O_CREATE, os.ModePerm)
 	if err != nil {
 		panic(err)
 	}
-	defer csvFile.Close()
+	defer parquetFile.Close()
 
 	start := time.Now()
-	err = gocsv.MarshalFile(&records, csvFile) // Use this to save the CSV back to the file
-	if err != nil {
-		panic(err)
-	}
+	exports.ExportToParquet(context.Background(), parquetFile, df)
 	end := time.Now()
 	elapsed := end.Sub(start)
-	fmt.Printf("write csv %d line elapsed: %v\n", len(records), elapsed)
+	fmt.Printf("write parquet %d line elapsed: %v\n", df.NRows(), elapsed)
+
+	fmt.Print(df.Table())
+}
+
+func TestImportParquet(t *testing.T) {
+	fr, _ := local.NewLocalFileReader("output.parquet")
+	defer fr.Close()
+
+	df, _ := imports.LoadFromParquet(context.Background(), fr)
+	fmt.Print(df.Table())
 }
