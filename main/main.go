@@ -62,8 +62,8 @@ func main() {
 		defer art.Release()
 
 		// open influx db
-		client := influxdb2.NewClientWithOptions("http://192.168.1.93:8086",
-			"yvTRbUoJhVR4mI6GLCKwOX1pxczUZCWXiBEjCZ8dEq9W2KQatEPqQhLJxg5sj93c7XVmFTZf89V8f5yH3VVAgw==",
+		client := influxdb2.NewClientWithOptions("http://127.0.0.1:8086",
+			"2icFg9HTzq6viq-rzoBfW_In6ZKM6BGu2RtPfgMaZAu0QVtMQndm4PImpwBEDjR0R_V4ru8H8wc9ocbtJT9x5A==",
 			influxdb2.DefaultOptions().SetUseGZip(true).SetPrecision(time.Millisecond).SetBatchSize(1000))
 		defer client.Close()
 
