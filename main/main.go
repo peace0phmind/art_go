@@ -33,7 +33,7 @@ func putAmpereValue(v *AmpereValue) {
 }
 
 const channel_count = 16
-const channel_count_for_save = 16
+const channel_count_for_save = 6
 
 func printInfluxdbError(writeAPI api.WriteAPI) {
 	for e := range writeAPI.Errors() {
