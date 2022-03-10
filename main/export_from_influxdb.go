@@ -37,6 +37,7 @@ func Exists(name string) bool {
 func main() {
 	beginTimeStr := flag.String("b", Default_Begin_Time, "Begin Time , format 2006-01-02T15")
 	hourNumber := flag.Int("h", 1, "hour for number to get, default is 1 hour")
+	flag.Parse()
 
 	client := influxdb2.NewClient("http://127.0.0.1:8086", "2icFg9HTzq6viq-rzoBfW_In6ZKM6BGu2RtPfgMaZAu0QVtMQndm4PImpwBEDjR0R_V4ru8H8wc9ocbtJT9x5A==")
 	// always close client at the end
