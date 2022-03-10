@@ -88,7 +88,7 @@ func main() {
 				for result.Next() {
 					// Notice when group key has changed
 					if result.TableChanged() {
-						fmt.Printf("table: %s\n", result.TableMetadata().String())
+						//fmt.Printf("table: %s\n", result.TableMetadata().String())
 					}
 					i++
 					//// Access data
