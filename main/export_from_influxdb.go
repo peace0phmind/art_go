@@ -98,7 +98,7 @@ func main() {
 					i++
 					//// Access data
 					records = append(records, record{
-						T: result.Record().Time(),
+						T: result.Record().Time().Add(8 * time.Hour),
 						V: result.Record().Value().(float64),
 					})
 				}
