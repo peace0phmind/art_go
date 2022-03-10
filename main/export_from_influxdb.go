@@ -66,6 +66,8 @@ func main() {
 				continue
 			}
 
+			start := time.Now()
+
 			e := b.Add(1 * time.Minute)
 			var records []record
 
@@ -73,23 +75,16 @@ func main() {
 			for j := 0; j < 60; j++ {
 				query := fmt.Sprintf(`from(bucket: "znb") |> range(start: %s, stop: %s) |> filter(fn: (r) => r["_measurement"] == "Ampere")   |> filter(fn: (r) => r["channel"] == "%d") |> keep(columns: ["_time", "_value"])`,
 					b.Format(Time_Format), e.Format(Time_Format), channel)
-				println(query)
 				//query := `from(bucket: "znb") |> range(start: 2022-02-11T04:00:00Z, stop: 2022-02-11T04:01:00Z) |> filter(fn: (r) => r["_measurement"] == "Ampere")  |> keep(columns: ["_time", "_value"])`
 				//query := `from(bucket: "znb") |> range(start: 2022-02-15T00:40:00Z, stop: 2022-02-15T00:41:00Z) |> filter(fn: (r) => r["_measurement"] == "Ampere") |> filter(fn: (r) => r["channel"] == "1")`
 
 				// get QueryTableResult
-				start := time.Now()
 				result, err1 := queryAPI.Query(context.Background(), query)
-				end := time.Now()
-				elapsed := end.Sub(start)
-				fmt.Printf("elapsed: %v\n", elapsed)
-
 				if err1 != nil {
 					panic(err1)
 				}
 
 				// Iterate over query response
-				start = time.Now()
 				for result.Next() {
 					// Notice when group key has changed
 					if result.TableChanged() {
@@ -102,9 +97,6 @@ func main() {
 						V: result.Record().Value().(float64),
 					})
 				}
-				end = time.Now()
-				elapsed = end.Sub(start)
-				fmt.Printf("get value, total:%d elapsed: %v\n", i, elapsed)
 
 				// check for an error
 				if result.Err() != nil {
@@ -120,7 +112,6 @@ func main() {
 				panic(err)
 			}
 
-			start := time.Now()
 			err = gocsv.MarshalFile(&records, csvFile) // Use this to save the CSV back to the file
 			if err != nil {
 				panic(err)
