@@ -53,7 +53,7 @@ func main() {
 		for channel := 1; channel <= 6; channel++ {
 			b := beginTime.Add(time.Duration(h) * time.Hour)
 
-			csvFileName := fmt.Sprintf("/home/ubuntu/data/csv/channel-%d-%s.csv", channel, b)
+			csvFileName := fmt.Sprintf("/home/ubuntu/data/csv/channel-%d-%s.csv", channel, b.Add(8*time.Hour).Format(Time_Format))
 			gzFileName := csvFileName + ".gz"
 
 			if Exists(csvFileName) {
