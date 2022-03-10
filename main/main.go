@@ -115,9 +115,9 @@ func main() {
 							println(fmt.Sprintf("read analog error: %v", err))
 						} else {
 							dd := time.Now()
-							if dd.Hour() < 6 || dd.Hour() > 22 {
-								continue
-							}
+							//if dd.Hour() < 6 || dd.Hour() > 22 {
+							//	continue
+							//}
 
 							for j := 0; j < param.SamplePerChannel; j++ {
 								for c := 0; c < channel_count_for_save; c++ {
