@@ -16,7 +16,7 @@ type record struct {
 }
 
 const (
-	Begin_Time  = "2022-03-10T15:00:00Z"
+	Begin_Time  = "2022-03-10T07:00:00Z"
 	Time_Format = "2006-01-02T15:04:05Z"
 )
 
@@ -37,7 +37,7 @@ func TestExportCsv(t *testing.T) {
 
 	i := 0
 	for channel := 1; channel <= 6; channel++ {
-		for j := 0; j < 60; j++ {
+		for j := 0; j < 60*3; j++ {
 			query := fmt.Sprintf(`from(bucket: "znb") |> range(start: %s, stop: %s) |> filter(fn: (r) => r["_measurement"] == "Ampere")   |> filter(fn: (r) => r["channel"] == "%d") |> keep(columns: ["_time", "_value"])`,
 				b.Format(Time_Format), e.Format(Time_Format), channel)
 			println(query)
