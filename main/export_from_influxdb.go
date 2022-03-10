@@ -17,8 +17,10 @@ type record struct {
 }
 
 const (
-	Default_Begin_Time = "2022-03-10T15:00:00Z"
-	Time_Format        = "2006-01-02T15:04:05Z"
+	//Default_Begin_Time = "2022-03-10T15:00:00Z"
+	Default_Begin_Time = "2022-03-10T15"
+	Time_Format_ISO    = "2006-01-02T15:04:05Z"
+	Time_Format        = "2006-01-02T15"
 )
 
 func Exists(name string) bool {
@@ -33,7 +35,7 @@ func Exists(name string) bool {
 }
 
 func main() {
-	beginTimeStr := flag.String("b", Default_Begin_Time, "Begin Time , format 2006-01-02T15:04:05Z")
+	beginTimeStr := flag.String("b", Default_Begin_Time, "Begin Time , format 2006-01-02T15")
 	hourNumber := flag.Int("h", 1, "hour for number to get, default is 1 hour")
 
 	client := influxdb2.NewClient("http://127.0.0.1:8086", "2icFg9HTzq6viq-rzoBfW_In6ZKM6BGu2RtPfgMaZAu0QVtMQndm4PImpwBEDjR0R_V4ru8H8wc9ocbtJT9x5A==")
@@ -74,7 +76,7 @@ func main() {
 			i := 0
 			for j := 0; j < 60; j++ {
 				query := fmt.Sprintf(`from(bucket: "znb") |> range(start: %s, stop: %s) |> filter(fn: (r) => r["_measurement"] == "Ampere")   |> filter(fn: (r) => r["channel"] == "%d") |> keep(columns: ["_time", "_value"])`,
-					b.Format(Time_Format), e.Format(Time_Format), channel)
+					b.Format(Time_Format_ISO), e.Format(Time_Format_ISO), channel)
 				//query := `from(bucket: "znb") |> range(start: 2022-02-11T04:00:00Z, stop: 2022-02-11T04:01:00Z) |> filter(fn: (r) => r["_measurement"] == "Ampere")  |> keep(columns: ["_time", "_value"])`
 				//query := `from(bucket: "znb") |> range(start: 2022-02-15T00:40:00Z, stop: 2022-02-15T00:41:00Z) |> filter(fn: (r) => r["_measurement"] == "Ampere") |> filter(fn: (r) => r["channel"] == "1")`
 
