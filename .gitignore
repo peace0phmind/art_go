@@ -1,2 +1,4 @@
 .idea
 go.sum
+main/main
+main/main.log
