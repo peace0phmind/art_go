@@ -89,13 +89,13 @@ func TestExportCsv(t *testing.T) {
 		if err != nil {
 			panic(err)
 		}
-		csvFile.Close()
 
 		start := time.Now()
 		err = gocsv.MarshalFile(&records, csvFile) // Use this to save the CSV back to the file
 		if err != nil {
 			panic(err)
 		}
+		csvFile.Close()
 
 		end := time.Now()
 		elapsed := end.Sub(start)
