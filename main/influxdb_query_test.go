@@ -16,12 +16,12 @@ type record struct {
 }
 
 const (
-	Begin_Time  = "2022-02-18T00:30:00Z"
+	Begin_Time  = "2022-03-10T15:00:00Z"
 	Time_Format = "2006-01-02T15:04:05Z"
 )
 
 func TestExportCsv(t *testing.T) {
-	client := influxdb2.NewClient("http://192.168.1.93:8086", "yvTRbUoJhVR4mI6GLCKwOX1pxczUZCWXiBEjCZ8dEq9W2KQatEPqQhLJxg5sj93c7XVmFTZf89V8f5yH3VVAgw==")
+	client := influxdb2.NewClient("http://127.0.0.1:8086", "2icFg9HTzq6viq-rzoBfW_In6ZKM6BGu2RtPfgMaZAu0QVtMQndm4PImpwBEDjR0R_V4ru8H8wc9ocbtJT9x5A==")
 	// always close client at the end
 	defer client.Close()
 
@@ -36,65 +36,69 @@ func TestExportCsv(t *testing.T) {
 	var records []record
 
 	i := 0
-	for j := 0; j < 60*4; j++ {
-		query := fmt.Sprintf(`from(bucket: "znb") |> range(start: %s, stop: %s) |> filter(fn: (r) => r["_measurement"] == "Ampere")   |> filter(fn: (r) => r["channel"] == "1") |> keep(columns: ["_time", "_value"])`,
-			b.Format(Time_Format), e.Format(Time_Format))
-		println(query)
-		//query := `from(bucket: "znb") |> range(start: 2022-02-11T04:00:00Z, stop: 2022-02-11T04:01:00Z) |> filter(fn: (r) => r["_measurement"] == "Ampere")  |> keep(columns: ["_time", "_value"])`
-		//query := `from(bucket: "znb") |> range(start: 2022-02-15T00:40:00Z, stop: 2022-02-15T00:41:00Z) |> filter(fn: (r) => r["_measurement"] == "Ampere") |> filter(fn: (r) => r["channel"] == "1")`
+	for channel := 1; channel <= 6; channel++ {
+		for j := 0; j < 60; j++ {
+			query := fmt.Sprintf(`from(bucket: "znb") |> range(start: %s, stop: %s) |> filter(fn: (r) => r["_measurement"] == "Ampere")   |> filter(fn: (r) => r["channel"] == "%d") |> keep(columns: ["_time", "_value"])`,
+				b.Format(Time_Format), e.Format(Time_Format), channel)
+			println(query)
+			//query := `from(bucket: "znb") |> range(start: 2022-02-11T04:00:00Z, stop: 2022-02-11T04:01:00Z) |> filter(fn: (r) => r["_measurement"] == "Ampere")  |> keep(columns: ["_time", "_value"])`
+			//query := `from(bucket: "znb") |> range(start: 2022-02-15T00:40:00Z, stop: 2022-02-15T00:41:00Z) |> filter(fn: (r) => r["_measurement"] == "Ampere") |> filter(fn: (r) => r["channel"] == "1")`
 
-		// get QueryTableResult
+			// get QueryTableResult
+			start := time.Now()
+			result, err1 := queryAPI.Query(context.Background(), query)
+			end := time.Now()
+			elapsed := end.Sub(start)
+			fmt.Printf("elapsed: %v\n", elapsed)
+
+			if err1 != nil {
+				panic(err1)
+			}
+
+			// Iterate over query response
+			start = time.Now()
+			for result.Next() {
+				// Notice when group key has changed
+				if result.TableChanged() {
+					fmt.Printf("table: %s\n", result.TableMetadata().String())
+				}
+				//records[i].T = result.Record().Time()
+				//records[i].V = result.Record().Value().(float64)
+				i++
+				//// Access data
+				records = append(records, record{
+					T: result.Record().Time(),
+					V: result.Record().Value().(float64),
+				})
+			}
+			end = time.Now()
+			elapsed = end.Sub(start)
+			fmt.Printf("get value, total:%d elapsed: %v\n", i, elapsed)
+
+			// check for an error
+			if result.Err() != nil {
+				fmt.Printf("query parsing error: %v\n", result.Err().Error())
+			}
+
+			b = b.Add(1 * time.Minute)
+			e = e.Add(1 * time.Minute)
+		}
+
+		csvFileName := fmt.Sprintf("/home/ubuntu/data/csv/channel-%d-%s.csv", channel, Begin_Time)
+		csvFile, err := os.OpenFile(csvFileName, os.O_RDWR|os.O_CREATE, os.ModePerm)
+		if err != nil {
+			panic(err)
+		}
+		csvFile.Close()
+
 		start := time.Now()
-		result, err1 := queryAPI.Query(context.Background(), query)
+		err = gocsv.MarshalFile(&records, csvFile) // Use this to save the CSV back to the file
+		if err != nil {
+			panic(err)
+		}
+
 		end := time.Now()
 		elapsed := end.Sub(start)
-		fmt.Printf("elapsed: %v\n", elapsed)
-
-		if err1 != nil {
-			panic(err1)
-		}
-
-		// Iterate over query response
-		start = time.Now()
-		for result.Next() {
-			// Notice when group key has changed
-			if result.TableChanged() {
-				fmt.Printf("table: %s\n", result.TableMetadata().String())
-			}
-			//records[i].T = result.Record().Time()
-			//records[i].V = result.Record().Value().(float64)
-			i++
-			//// Access data
-			records = append(records, record{
-				T: result.Record().Time(),
-				V: result.Record().Value().(float64),
-			})
-		}
-		end = time.Now()
-		elapsed = end.Sub(start)
-		fmt.Printf("get value, total:%d elapsed: %v\n", i, elapsed)
-
-		// check for an error
-		if result.Err() != nil {
-			fmt.Printf("query parsing error: %v\n", result.Err().Error())
-		}
-
-		b = b.Add(1 * time.Minute)
-		e = e.Add(1 * time.Minute)
+		fmt.Printf("write csv %s, %d line elapsed: %v\n", csvFileName, len(records), elapsed)
 	}
-
-	csvFile, err := os.OpenFile("output.csv", os.O_RDWR|os.O_CREATE, os.ModePerm)
-	if err != nil {
-		panic(err)
-	}
-	defer csvFile.Close()
-
-	start := time.Now()
-	err = gocsv.MarshalFile(&records, csvFile) // Use this to save the CSV back to the file
-	if err != nil {
-		panic(err)
-	}
-	end := time.Now()
-	elapsed := end.Sub(start)
-	fmt.Printf("write csv %d line elapsed: %v\n", len(records), elapsed)
 }
