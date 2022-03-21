@@ -2,19 +2,22 @@ package main
 
 import (
 	"fmt"
+	"github.com/gocarina/gocsv"
 	"github.com/influxdata/influxdb-client-go/v2"
 	"github.com/influxdata/influxdb-client-go/v2/api"
 	"github.com/influxdata/influxdb-client-go/v2/api/http"
+	"github.com/klauspost/compress/gzip"
 	"github.com/peace0phmind/art_go"
+	"os"
 	"strconv"
 	"sync"
 	"time"
 )
 
 type AmpereValue struct {
-	Channel int
-	Value   float64
-	Time    time.Time
+	Channel int       `csv:"channel"`
+	Time    time.Time `csv:"time"`
+	Value   float64   `csv:"value"`
 }
 
 var ampereValuePool sync.Pool
@@ -30,6 +33,12 @@ func getAmpereValue() *AmpereValue {
 
 func putAmpereValue(v *AmpereValue) {
 	ampereValuePool.Put(v)
+}
+
+func putAllAmpereValue(vs []*AmpereValue) {
+	for v := range vs {
+		ampereValuePool.Put(v)
+	}
 }
 
 const channel_count = 16
@@ -54,6 +63,46 @@ func saveAmpereToInfluxdb(vvc chan *AmpereValue, writeAPI api.WriteAPI) {
 	writeAPI.Flush()
 }
 
+const (
+	CSV_File_Format      = "15:04:05"
+	CSV_File_Path_Format = "2006-01-02"
+)
+
+func saveAmpereToCsv(vvc chan *AmpereValue) {
+	var ampereValues []*AmpereValue
+	for v := range vvc {
+		if v.Channel == 0 && v.Time.Second() == 0 && v.Time.Nanosecond() == 0 && len(ampereValues) > 0 {
+			// save to csv file
+			tt := v.Time.Add(-1 * time.Minute)
+			filePath := fmt.Sprintf("./csv/%s", tt.Format(CSV_File_Path_Format))
+			err := os.MkdirAll(filePath, os.ModePerm)
+			if err != nil {
+				println(err)
+			}
+
+			filename := fmt.Sprintf("%s/%s.zip", filePath, tt.Format(CSV_File_Format))
+			csvFile, err := os.OpenFile(filename, os.O_RDWR|os.O_CREATE, os.ModePerm)
+			if err != nil {
+				println(err)
+			}
+
+			buf, err := gocsv.MarshalBytes(ampereValues)
+			if err == nil {
+				w := gzip.NewWriter(csvFile)
+				w.Write(buf)
+				w.Close()
+			}
+
+			csvFile.Close()
+
+			putAllAmpereValue(ampereValues)
+			ampereValues = nil
+		}
+
+		ampereValues = append(ampereValues, v)
+	}
+}
+
 func main() {
 	art, err := art_go.NewArt(0)
 	if err != nil {
@@ -75,8 +124,9 @@ func main() {
 		})
 
 		// init chan task
-		ampereValueChan := make(chan *AmpereValue, 1000*32*60)
-		go saveAmpereToInfluxdb(ampereValueChan, writeAPI)
+		ampereValueChan := make(chan *AmpereValue, 1000*32*600)
+		//go saveAmpereToInfluxdb(ampereValueChan, writeAPI)
+		go saveAmpereToCsv(ampereValueChan)
 
 		param := &art_go.AITaskParam{}
 		param.SampleSignal = art_go.AI_SAMPLE_SIGNAL_AI
