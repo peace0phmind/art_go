@@ -65,8 +65,8 @@ func saveAmpereToInfluxdb(vvc chan *AmpereValue, writeAPI api.WriteAPI) {
 
 const (
 	//CSV_File_Format      = "15_04_05"
-	CSV_File_Format      = "1504"
-	CSV_File_Path_Format = "20060102"
+	CSV_File_Format      = "04"
+	CSV_File_Path_Format = "200601/02/15"
 )
 
 func saveAmpereToCsv(vvc chan *AmpereValue) {
