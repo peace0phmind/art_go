@@ -71,6 +71,7 @@ func saveAmpereToCsv(vvc chan *AmpereValue) {
 	var ampereValues []*AmpereValue
 	for v := range vvc {
 		if v.Channel == 0 && v.Time.Second() == 0 && v.Time.Nanosecond() == 0 && len(ampereValues) > 0 {
+			println("11111")
 			// save to csv file
 			tt := v.Time.Add(-1 * time.Minute)
 			filePath := fmt.Sprintf("/home/ubuntu/csv/%s", tt.Format(CSV_File_Path_Format))
@@ -103,6 +104,7 @@ func saveAmpereToCsv(vvc chan *AmpereValue) {
 			//}
 
 			csvFile.Close()
+			println("22222")
 
 			putAllAmpereValue(ampereValues)
 			ampereValues = nil
