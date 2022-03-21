@@ -6,6 +6,7 @@ import (
 	"github.com/influxdata/influxdb-client-go/v2"
 	"github.com/influxdata/influxdb-client-go/v2/api"
 	"github.com/influxdata/influxdb-client-go/v2/api/http"
+	"github.com/klauspost/compress/gzip"
 	"github.com/peace0phmind/art_go"
 	"os"
 	"strconv"
@@ -35,7 +36,7 @@ func putAmpereValue(v *AmpereValue) {
 }
 
 func putAllAmpereValue(vs []*AmpereValue) {
-	for v := range vs {
+	for _, v := range vs {
 		ampereValuePool.Put(v)
 	}
 }
@@ -63,15 +64,15 @@ func saveAmpereToInfluxdb(vvc chan *AmpereValue, writeAPI api.WriteAPI) {
 }
 
 const (
-	CSV_File_Format      = "15_04_05"
-	CSV_File_Path_Format = "2006_01_02"
+	//CSV_File_Format      = "15_04_05"
+	CSV_File_Format      = "1504"
+	CSV_File_Path_Format = "20060102"
 )
 
 func saveAmpereToCsv(vvc chan *AmpereValue) {
 	var ampereValues []*AmpereValue
 	for v := range vvc {
 		if v.Channel == 0 && v.Time.Second() == 0 && v.Time.Nanosecond() == 0 && len(ampereValues) > 0 {
-			println("11111")
 			// save to csv file
 			tt := v.Time.Add(-1 * time.Minute)
 			filePath := fmt.Sprintf("/home/ubuntu/csv/%s", tt.Format(CSV_File_Path_Format))
@@ -80,31 +81,30 @@ func saveAmpereToCsv(vvc chan *AmpereValue) {
 				println(err)
 			}
 
-			filename := fmt.Sprintf("%s/%s.csv", filePath, tt.Format(CSV_File_Format))
+			filename := fmt.Sprintf("%s/%s.zip", filePath, tt.Format(CSV_File_Format))
 			csvFile, err := os.OpenFile(filename, os.O_RDWR|os.O_CREATE, os.ModePerm)
 			if err != nil {
 				println(err)
 			}
 
-			err = gocsv.MarshalFile(&ampereValues, csvFile) // Use this to save the CSV back to the file
-			if err != nil {
-				println(err)
-			}
-
-			//buf, err := gocsv.MarshalBytes(&ampereValues)
-			//if err == nil {
-			//	w := gzip.NewWriter(csvFile)
-			//	_, e := w.Write(buf)
-			//	if e != nil {
-			//		println(e)
-			//	}
-			//	w.Close()
-			//} else {
+			//err = gocsv.MarshalFile(&ampereValues, csvFile) // Use this to save the CSV back to the file
+			//if err != nil {
 			//	println(err)
 			//}
 
+			buf, err := gocsv.MarshalBytes(&ampereValues)
+			if err == nil {
+				w := gzip.NewWriter(csvFile)
+				_, e := w.Write(buf)
+				if e != nil {
+					println(e)
+				}
+				w.Close()
+			} else {
+				println(err)
+			}
+
 			csvFile.Close()
-			println("22222")
 
 			putAllAmpereValue(ampereValues)
 			ampereValues = nil
@@ -135,7 +135,7 @@ func main() {
 		})
 
 		// init chan task
-		ampereValueChan := make(chan *AmpereValue, 1000*32*600)
+		ampereValueChan := make(chan *AmpereValue, 1000*32*60)
 		//go saveAmpereToInfluxdb(ampereValueChan, writeAPI)
 		go saveAmpereToCsv(ampereValueChan)
 
