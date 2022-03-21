@@ -6,7 +6,6 @@ import (
 	"github.com/influxdata/influxdb-client-go/v2"
 	"github.com/influxdata/influxdb-client-go/v2/api"
 	"github.com/influxdata/influxdb-client-go/v2/api/http"
-	"github.com/klauspost/compress/gzip"
 	"github.com/peace0phmind/art_go"
 	"os"
 	"strconv"
@@ -80,23 +79,28 @@ func saveAmpereToCsv(vvc chan *AmpereValue) {
 				println(err)
 			}
 
-			filename := fmt.Sprintf("%s/%s.zip", filePath, tt.Format(CSV_File_Format))
+			filename := fmt.Sprintf("%s/%s.csv", filePath, tt.Format(CSV_File_Format))
 			csvFile, err := os.OpenFile(filename, os.O_RDWR|os.O_CREATE, os.ModePerm)
 			if err != nil {
 				println(err)
 			}
 
-			buf, err := gocsv.MarshalBytes(&ampereValues)
-			if err == nil {
-				w := gzip.NewWriter(csvFile)
-				_, e := w.Write(buf)
-				if e != nil {
-					println(e)
-				}
-				w.Close()
-			} else {
+			err = gocsv.MarshalFile(&ampereValues, csvFile) // Use this to save the CSV back to the file
+			if err != nil {
 				println(err)
 			}
+
+			//buf, err := gocsv.MarshalBytes(&ampereValues)
+			//if err == nil {
+			//	w := gzip.NewWriter(csvFile)
+			//	_, e := w.Write(buf)
+			//	if e != nil {
+			//		println(e)
+			//	}
+			//	w.Close()
+			//} else {
+			//	println(err)
+			//}
 
 			csvFile.Close()
 
