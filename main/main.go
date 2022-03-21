@@ -81,7 +81,7 @@ func saveAmpereToCsv(vvc chan *AmpereValue) {
 				println(err)
 			}
 
-			filename := fmt.Sprintf("%s/%s.zip", filePath, tt.Format(CSV_File_Format))
+			filename := fmt.Sprintf("%s/%s.gz", filePath, tt.Format(CSV_File_Format))
 			csvFile, err := os.OpenFile(filename, os.O_RDWR|os.O_CREATE, os.ModePerm)
 			if err != nil {
 				println(err)
