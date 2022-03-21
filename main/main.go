@@ -86,7 +86,7 @@ func saveAmpereToCsv(vvc chan *AmpereValue) {
 				println(err)
 			}
 
-			buf, err := gocsv.MarshalBytes(ampereValues)
+			buf, err := gocsv.MarshalBytes(&ampereValues)
 			if err == nil {
 				w := gzip.NewWriter(csvFile)
 				_, e := w.Write(buf)
