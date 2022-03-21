@@ -74,7 +74,7 @@ func saveAmpereToCsv(vvc chan *AmpereValue) {
 		if v.Channel == 0 && v.Time.Second() == 0 && v.Time.Nanosecond() == 0 && len(ampereValues) > 0 {
 			// save to csv file
 			tt := v.Time.Add(-1 * time.Minute)
-			filePath := fmt.Sprintf("./csv/%s", tt.Format(CSV_File_Path_Format))
+			filePath := fmt.Sprintf("/home/ubuntu/csv/%s", tt.Format(CSV_File_Path_Format))
 			err := os.MkdirAll(filePath, os.ModePerm)
 			if err != nil {
 				println(err)
